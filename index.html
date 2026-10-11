@@ -30,7 +30,7 @@
       padding: 0;
       width: 100%;
       height: 100%;
-      min-height: 420px; /* 防止 Notion 編輯器壓縮成 0px 空白 */
+      min-height: 420px;
       background: transparent;
       display: flex;
       justify-content: center;
@@ -130,7 +130,7 @@
       display: block;
     }
 
-    /* 鼠標懸停熱區時的亮邊反饋 */
+    /* 鼠標懸停時的亮邊反饋 */
     .accessory.hovered {
       filter: grayscale(40%) brightness(0.85) opacity(0.9) drop-shadow(0px 0px 6px rgba(255, 255, 255, 0.8));
       transform: scale(1.02);
@@ -144,15 +144,22 @@
       z-index: 5;
     }
 
-    .hotspot-overlay {
+    /* 確保熱區層級在最上方且完美支援手機與電腦點擊 */
+    .hotspot-layer {
       position: absolute;
       top: 0; left: 0;
       width: 100%; height: 100%;
-      z-index: 10;
-      opacity: 0;
+      z-index: 999 !important;
+      pointer-events: none;
     }
 
-    area { cursor: pointer; outline: none; }
+    .touch-area {
+      position: absolute;
+      cursor: pointer;
+      background: rgba(0, 0, 0, 0); /* 完全透明 */
+      pointer-events: auto !important;
+      -webkit-tap-highlight-color: transparent;
+    }
 
     /* 下方對話框 */
     .info-box {
@@ -218,7 +225,6 @@
     }
     .close-btn:hover { opacity: 1; }
 
-    /* 五彩星星慶祝粒子 Canvas */
     #particle-canvas {
       position: absolute;
       top: 0; left: 0;
@@ -227,8 +233,6 @@
       z-index: 99;
     }
   </style>
-
-  <script src="https://cdnjs.cloudflare.com/ajax/libs/image-map-resizer/1.0.10/js/imageMapResizer.min.js"></script>
 </head>
 <body>
 
@@ -244,8 +248,9 @@
     <div class="character-stage">
       <div class="stage-shadow"></div>
       <!-- 角色底圖 -->
-      <img class="base-character" referrerpolicy="no-referrer" src="https://i.imgur.com/jd6eHYJ.png" alt="角色">
+      <img class="base-character" referrerpolicy="no-referrer" src="https://i.imgur.com/jd6eHYJ.png" alt="切克斯">
 
+      <!-- 配件圖層 -->
       <img id="acc-褲子" class="accessory" referrerpolicy="no-referrer" src="https://i.imgur.com/fbUEfFS.png">
       <img id="acc-鞋子左" class="accessory" referrerpolicy="no-referrer" src="https://i.imgur.com/79jc9uf.png">
       <img id="acc-鞋子右" class="accessory" referrerpolicy="no-referrer" src="https://i.imgur.com/79jc9uf.png">
@@ -257,49 +262,58 @@
       <img id="acc-耳環右" class="accessory" referrerpolicy="no-referrer" src="https://i.imgur.com/WAMGtjG.png">
       <img id="acc-帽子" class="accessory" referrerpolicy="no-referrer" src="https://i.imgur.com/8ELUv5i.png">
 
-      <img class="hotspot-overlay" src="data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='1000' height='1000'></svg>" usemap="#character-map">
+      <!-- 手機與電腦 100% 靈敏的透明觸控熱區 -->
+      <div class="hotspot-layer">
+        <!-- 帽子 -->
+        <div class="touch-area" style="top: 5%; left: 20%; width: 60%; height: 28%; border-radius: 50%;"
+             onmouseenter="hoverAcc('帽子', true)" onmouseleave="hoverAcc('帽子', false)"
+             onclick="clickAccessory(event, '帽子', '暖呼呼飛行員帽', '在 1999 年末的喀布爾小鎮上，市面上陸續浮現出各式各樣帶有「仿」字的奇怪材料與食物。人們從一開始的瞠目結舌，漸漸演變成習以為常——大家甚至開始深信不疑：外星人正企圖複製這個即將消失的 1999 年。您眼前的這頂帽子，正是由「仿」麂皮與「仿」羊羔絨縫製而成的飛行員帽。它最顯眼之處，莫過於那塊縫在正中央的牛仔成分標籤，上面用著粗獷的打字機字體刺繡著『AIR-DRIED』——意即『於飛行中風乾』。更古怪的是，帽沿兩側附著兩個形狀截然不同、無論如何也無法扣上的金屬護耳扣帶。')"></div>
 
-      <map name="character-map">
-        <area shape="poly" coords="357,59,262,81,220,120,206,173,213,213,175,235,164,268,168,293,133,339,87,379,75,472,115,533,154,568,120,594,116,648,157,681,206,686,241,661,266,617,253,592,303,594,340,583,354,556,335,536,304,549,277,544,267,563,235,554,231,529,200,496,195,449,228,408,255,396,243,347,327,275,418,268,523,272,665,293,686,423,731,394,769,400,803,432,811,472,798,507,777,522,763,529,769,549,753,558,734,564,722,544,702,546,676,540,663,536,649,549,654,570,669,580,698,593,722,590,745,594,740,605,727,615,745,627,756,638,769,641,779,672,795,678,817,666,812,635,832,630,840,661,857,667,874,656,882,630,878,594,873,580,851,579,849,566,912,502,925,447,923,396,913,371,881,347,852,322,831,288,836,259,830,252,830,234,791,210,790,139,762,91,704,68,542,56" 
-              onmouseenter="hoverAcc('帽子', true)" onmouseleave="hoverAcc('帽子', false)"
-              onclick="clickAccessory(event, '帽子', '暖呼呼飛行員帽', '在 1999 年末的喀布爾小鎮上，市面上陸續浮現出各式各樣帶有「仿」字的奇怪材料與食物。人們從一開始的瞠目結舌，漸漸演變成習以為常——大家甚至開始深信不疑：外星人正企圖複製這個即將消失的 1999 年。您眼前的這頂帽子，正是由「仿」麂皮與「仿」羊羔絨縫製而成的飛行員帽。它最顯眼之處，莫過於那塊縫在正中央的牛仔成分標籤，上面用著粗獷的打字機字體刺繡著『AIR-DRIED』——意即『於飛行中風乾』。更古怪的是，帽沿兩側附著兩個形狀截然不同、無論如何也無法扣上的金屬護耳扣帶。')">
+        <!-- 耳環左 -->
+        <div class="touch-area" style="top: 48%; left: 20%; width: 12%; height: 10%; border-radius: 50%;"
+             onmouseenter="hoverAcc('耳環左', true)" onmouseleave="hoverAcc('耳環左', false)"
+             onclick="clickAccessory(event, '耳環左', '黃金豆', '長兩公分、寬零點六公分、扣在耳骨上的貼耳耳環。帶著幾分生鏽痕跡的「仿」金屬光澤，在耳際顯得獨特卻不張揚，就像佇立在飛機雙翼上、指引著方向的小小航行燈。補充一句，路易曾將它們稱作「黃金豆」——「起司！你的黃金豆又丟在床底下啦！」')"></div>
 
-        <area shape="poly" coords="279,519,266,513,249,510,238,516,233,529,229,548,238,553,253,557,266,559,276,541" 
-              onmouseenter="hoverAcc('耳環左', true)" onmouseleave="hoverAcc('耳環左', false)"
-              onclick="clickAccessory(event, '耳環左', '黃金豆', '長兩公分、寬零點六公分、扣在耳骨上的貼耳耳環。帶著幾分生鏽痕跡的「仿」金屬光澤，在耳際顯得獨特卻不張揚，就像佇立在飛機雙翼上、指引著方向的小小航行燈。補充一句，路易曾將它們稱作「黃金豆」——「起司！你的黃金豆又丟在床底下啦！」')">
+        <!-- 耳環右 -->
+        <div class="touch-area" style="top: 48%; left: 68%; width: 12%; height: 10%; border-radius: 50%;"
+             onmouseenter="hoverAcc('耳環右', true)" onmouseleave="hoverAcc('耳環右', false)"
+             onclick="clickAccessory(event, '耳環右', '黃金豆', '長兩公分、寬零點六公分、扣在耳骨上的貼耳耳環。帶著幾分生鏽痕跡的「仿」金屬光澤，在耳際顯得獨特卻不張揚，就像佇立在飛機雙翼上、指引著方向的小小航行燈。補充一句，路易曾將它們稱作「黃金豆」——「起司！你的黃金豆又丟在床底下啦！」')"></div>
 
-        <area shape="poly" coords="757,513,739,510,726,516,720,527,727,547,735,562,759,555,769,547,763,518" 
-              onmouseenter="hoverAcc('耳環右', true)" onmouseleave="hoverAcc('耳環右', false)"
-              onclick="clickAccessory(event, '耳環右', '黃金豆', '長兩公分、寬零點六公分、扣在耳骨上的貼耳耳環。帶著幾分生鏽痕跡的「仿」金屬光澤，在耳際顯得獨特卻不張揚，就像佇立在飛機雙翼上、指引著方向的小小航行燈。補充一句，路易曾將它們稱作「黃金豆」——「起司！你的黃金豆又丟在床底下啦！」')">
+        <!-- 領帶 -->
+        <div class="touch-area" style="top: 52%; left: 42%; width: 16%; height: 20%; border-radius: 20%; z-index: 101;"
+             onmouseenter="hoverAcc('領帶', true)" onmouseleave="hoverAcc('領帶', false)"
+             onclick="clickAccessory(event, '領帶', '阿公的藍條紋西裝領帶', '這條領帶，是切克斯在一個塵封的木盒裡翻找出來的，那是外公留在小屋裡的寶物。小時候的切克斯總認為，一旦繫上了領帶，就能獲得像大人那般無窮無盡的力量，這讓他對領帶產生了近乎執念的著迷。特別是關於外公的傳說——母親提起過，外公是在一場駕駛戰機的飛行中永遠留在了天空裡。自那時起，這條領帶便在切克斯的夢裡盤旋了無數個夜晚，它帶著身材瘦小、正拔高長個兒的小切克斯，飛過時間的河流與異國的土地，最終將他塑造成了今天這個瘋狂熱愛飛行與收集領帶的傢伙。')"></div>
 
-        <area shape="poly" coords="541,558,518,549,495,549,475,552,459,556,451,571,451,586,458,606,470,610,456,625,432,654,432,669,446,686,473,701,497,713,522,703,559,678,566,658,550,636,528,607,544,604,550,569" 
-              onmouseenter="hoverAcc('領帶', true)" onmouseleave="hoverAcc('領帶', false)"
-              onclick="clickAccessory(event, '領帶', '阿公的藍條紋西裝領帶', '這條領帶，是切克斯在一個塵封的木盒裡翻找出來的，那是外公留在小屋裡的寶物。小時候的切克斯總認為，一旦繫上了領帶，就能獲得像大人那般無窮無盡的力量，這讓他對領帶產生了近乎執念的著迷。特別是關於外公的傳說——母親提起過，外公是在一場駕駛戰機的飛行中永遠留在了天空裡。自那時起，這條領帶便在切克斯的夢裡盤旋了無數個夜晚，它帶著身材瘦小、正拔高長個兒的小切克斯，飛過時間的河流與異國的土地，最終將他塑造成了今天這個瘋狂熱愛飛行與收集領帶的傢伙。')">
+        <!-- 衣服 -->
+        <div class="touch-area" style="top: 52%; left: 35%; width: 30%; height: 20%; border-radius: 20%; z-index: 100;"
+             onmouseenter="hoverAcc('衣服', true)" onmouseleave="hoverAcc('衣服', false)"
+             onclick="clickAccessory(event, '衣服', '柑仔色襟衫', '鮮豔的橘黃翻領短袖，像一顆午後跌落的柑橘，乘著耀眼的陽光著陸，捎來了夏日的訊息。')"></div>
 
-        <area shape="poly" coords="461,558,446,557,431,562,421,575,419,586,435,618,433,662,435,719,521,721,565,722,567,672,567,616,589,575,568,560,547,557,550,581,542,609,531,611,568,657,560,681,517,708,495,712,441,680,431,658,469,612,454,593,449,571" 
-              onmouseenter="hoverAcc('衣服', true)" onmouseleave="hoverAcc('衣服', false)"
-              onclick="clickAccessory(event, '衣服', '柑仔色襟衫', '鮮豔的橘黃翻領短袖，像一顆午後跌落的柑橘，乘著耀眼的陽光著陸，捎來了夏日的訊息。')">
+        <!-- 外套左 -->
+        <div class="touch-area" style="top: 52%; left: 18%; width: 25%; height: 26%; border-radius: 20%;"
+             onmouseenter="hoverAcc('外套左', true)" onmouseleave="hoverAcc('外套左', false)"
+             onclick="clickAccessory(event, '外套左', 'C-01飛行夾克', '小時候的切克斯可沒少往圖書館裡鑽。在那高高的、直通屋頂的窗台旁，他整天捧著大本大本的軍事戰機圖鑑。說起來，比起課本上那些化學元素符號，他腦子裡最先記牢的，反而是美軍那赫赫有名的 B-3 飛行夾克……而這件「CL-01 飛行夾克」，是他和路易聯手從二手中古店裡淘來的寶物，連型號都是取自兩人名字的縮寫。雖然袖子長了點兒，但把那羊毛部分厚厚地折上一圈，瞧著可別提有多威風了！')"></div>
 
-        <area shape="poly" coords="428,561,394,554,373,556,336,584,327,614,294,613,268,617,237,671,243,709,261,724,281,747,299,755,317,748,339,762,354,774,382,769,418,757,431,749,434,693,434,626,419,598,416,583" 
-              onmouseenter="hoverAcc('外套左', true)" onmouseleave="hoverAcc('外套左', false)"
-              onclick="clickAccessory(event, '外套左', 'C-01飛行夾克', '小時候的切克斯可沒少往圖書館裡鑽。在那高高的、直通屋頂的窗台旁，他整天捧著大本大本的軍事戰機圖鑑。說起來，比起課本上那些化學元素符號，他腦子裡最先記牢的，反而是美軍那赫赫有名的 B-3 飛行夾克……而這件「CL-01 飛行夾克」，是他和路易聯手從二手中古店裡淘來的寶物，連型號都是取自兩人名字的縮寫。雖然袖子長了點兒，但把那羊毛部分厚厚地折上一圈，瞧著可別提有多威風了！')">
+        <!-- 外套右 -->
+        <div class="touch-area" style="top: 52%; left: 57%; width: 25%; height: 26%; border-radius: 20%;"
+             onmouseenter="hoverAcc('外套右', true)" onmouseleave="hoverAcc('外套右', false)"
+             onclick="clickAccessory(event, '外套右', 'C-01飛行夾克', '小時候的切克斯可沒少往圖書館裡鑽。在那高高的、直通屋頂的窗台旁，他整天捧著大本大本的軍事戰機圖鑑。說起來，比起課本上那些化學元素符號，他腦子裡最先記牢的，反而是美軍那赫赫有名的 B-3 飛行夾克……而這件「CL-01 飛行夾克」，是他和路易聯手從二手中古店裡淘來的寶物，連型號都是取自兩人名字的縮寫。雖然袖子長了點兒，但把那羊毛部分厚厚地折上一圈，瞧著可別提有多威風了！')"></div>
 
-        <area shape="poly" coords="588,565,609,549,642,569,664,586,662,598,672,613,698,615,711,608,756,639,772,686,752,714,720,748,702,755,680,749,659,769,646,775,566,751,568,680,566,613" 
-              onmouseenter="hoverAcc('外套右', true)" onmouseleave="hoverAcc('外套右', false)"
-              onclick="clickAccessory(event, '外套右', 'C-01飛行夾克', '小時候的切克斯可沒少往圖書館裡鑽。在那高高的、直通屋頂的窗台旁，他整天捧著大本大本的軍事戰機圖鑑。說起來，比起課本上那些化學元素符號，他腦子裡最先記牢的，反而是美軍那赫赫有名的 B-3 飛行夾克……而這件「CL-01 飛行夾克」，是他和路易聯手從二手中古店裡淘來的寶物，連型號都是取自兩人名字的縮寫。雖然袖子長了點兒，但把那羊毛部分厚厚地折上一圈，瞧著可別提有多威風了！')">
+        <!-- 褲子 -->
+        <div class="touch-area" style="top: 68%; left: 32%; width: 36%; height: 12%; border-radius: 20%;"
+             onmouseenter="hoverAcc('褲子', true)" onmouseleave="hoverAcc('褲子', false)"
+             onclick="clickAccessory(event, '褲子', '丹寧拼皮牛仔褲', '運用金屬鈕扣將皮革布料拼接而成的牛仔褲。據說，褲腰前側那只不起眼的小口袋裡，正好好地塞著一塊從小鎮廢棄飛機上拆卸下來的高度表*——儘管指針早已停止運轉。(注：飛機儀表板上用以指示當前飛行高度之儀表，單位為英呎。)')"></div>
 
-        <area shape="poly" coords="438,720,564,722,568,749,630,769,640,803,513,820,510,802,486,801,486,823,367,805,369,775,433,750" 
-              onmouseenter="hoverAcc('褲子', true)" onmouseleave="hoverAcc('褲子', false)"
-              onclick="clickAccessory(event, '褲子', '丹寧拼皮牛仔褲', '運用金屬鈕扣將皮革布料拼接而成的牛仔褲。據說，褲腰前側那只不起眼的小口袋裡，正好好地塞著一塊從小鎮廢棄飛機上拆卸下來的高度表*——儘管指針早已停止運轉。(注：飛機儀表板上用以指示當前飛行高度之儀表，單位為英呎。)')">
+        <!-- 鞋子左 -->
+        <div class="touch-area" style="top: 75%; left: 20%; width: 30%; height: 18%; border-radius: 20%;"
+             onmouseenter="hoverAcc('鞋子左', true)" onmouseleave="hoverAcc('鞋子左', false)"
+             onclick="clickAccessory(event, '鞋子左', '栗色綁帶牛皮短靴', '鞋底被麥克筆粗粗寫上「Safe-to-Fly」的短靴，雖然尺寸稍微大了一號，卻絲毫不妨礙它成為主人最得力的夥伴，忠實地陪著他奔跑穿梭於小鎮的各個角落。')"></div>
 
-        <area shape="poly" coords="366,806,346,782,328,777,320,783,303,768,286,776,270,794,235,803,223,816,227,857,245,877,257,887,467,880,480,873,492,847,492,823" 
-              onmouseenter="hoverAcc('鞋子左', true)" onmouseleave="hoverAcc('鞋子左', false)"
-              onclick="clickAccessory(event, '鞋子左', '栗色綁帶牛皮短靴', '鞋底被麥克筆粗粗寫上「Safe-to-Fly」的短靴，雖然尺寸稍微大了一號，卻絲毫不妨礙它成為主人最得力的夥伴，忠實地陪著他奔跑穿梭於小鎮的各個角落。')">
-
-        <area shape="poly" coords="508,821,640,805,653,781,668,777,682,787,699,773,721,785,722,792,749,794,776,814,773,836,769,852,759,874,743,887,621,885,522,879,506,853" 
-              onmouseenter="hoverAcc('鞋子右', true)" onmouseleave="hoverAcc('鞋子右', false)"
-              onclick="clickAccessory(event, '鞋子右', '栗色綁帶牛皮短靴', '鞋底被麥克筆粗粗寫上「Safe-to-Fly」的短靴，雖然尺寸稍微大了一號，卻絲毫不妨礙它成為主人最得力的夥伴，忠實地陪著他奔跑穿梭於小鎮的各個角落。')">
-      </map>
+        <!-- 鞋子右 -->
+        <div class="touch-area" style="top: 75%; left: 50%; width: 30%; height: 18%; border-radius: 20%;"
+             onmouseenter="hoverAcc('鞋子右', true)" onmouseleave="hoverAcc('鞋子右', false)"
+             onclick="clickAccessory(event, '鞋子右', '栗色綁帶牛皮短靴', '鞋底被麥克筆粗粗寫上「Safe-to-Fly」的短靴，雖然尺寸稍微大了一號，卻絲毫不妨礙它成為主人最得力的夥伴，忠實地陪著他奔跑穿梭於小鎮的各個角落。')"></div>
+      </div>
     </div>
 
     <!-- 下方對話框 -->
@@ -313,11 +327,6 @@
   </div>
 
   <script>
-    window.onload = function() {
-      imageMapResize();
-      initParticles();
-    };
-
     let activeId = null;
     let unlockedItems = new Set();
     const totalCategories = 7;
@@ -370,7 +379,10 @@
     }
 
     function clickAccessory(evt, id, name, desc) {
-      evt.preventDefault();
+      if (evt) {
+        evt.preventDefault();
+        evt.stopPropagation();
+      }
       const infoBox = document.getElementById('infoBox');
       const category = getCategoryId(id);
       const els = getGroupElements(id);
@@ -415,6 +427,10 @@
         playClickSound(900);
       }
     }
+
+    window.onload = function() {
+      initParticles();
+    };
 
     let particles = [];
     function initParticles() {
